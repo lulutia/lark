@@ -1,16 +1,17 @@
 <template>
   <div class="hello">
-    <div id="map"></div>
-    <h2 v-if="error">{failStatus}</h2>
+    <div id="three"></div>
+    <h2 v-if="error">{{failStatus}}</h2>
     <ul v-else v-for="item in showLatitude">
       <li>
-        {item.elevation}
+        {{item.elevation}}
       </li>
     </ul>
   </div>
 </template>
 
 <script>
+import * as THREE from 'three';
 export default {
   name: 'hello',
   data () {
@@ -25,51 +26,59 @@ export default {
   },
   methods: {
     initPosition () {
-      for (let i = -180; i < 180; i++) {
+      for (let i = -1; i < 10; i++) {
         this.latitude.push({lat: 30.000, lng: parseFloat(i)});
       }
-      this.test();
+      this.getAltitude();
     },
-    saveAltitude (elevations, status) {
+    saveAltitude (results, status) {
+      if (status === 'OK') {
+        if (results) {
+          this.showLatitude = results.slice();
+          this.renderScene();
+        } else {
+          console.log('no results');
+        }
+      } else {
+        this.failStatus = status;
+        this.error = true;
+      }
+    },
+    renderScene () {
+      let scene, camera, renderer;
+      let geometry, material, mesh;
+      console.log(THREE);
+      scene = new THREE.Scene();
 
+      camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+      camera.position.z = 500;
+
+      geometry = new THREE.BoxGeometry( 200, 200, 200 );
+      material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+
+      mesh = new THREE.Mesh( geometry, material );
+      scene.add( mesh );
+
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+      document.getElementById('three').appendChild(renderer.domElement);
+      this.animate(mesh, renderer, scene, camera);
+    },
+    animate (mesh, renderer, scene, camera) {
+      //console.log(mesh.rotation);
+      mesh.rotation.x += 0.01;
+      mesh.rotation.y += 0.02;
+      renderer.render( scene, camera);
+      //requestAnimationFrame(this.animate(mesh, renderer, scene, camera));
     },
     getAltitude () {
-
+      let elevator = new google.maps.ElevationService;
+      elevator.getElevationForLocations({
+        'locations': this.latitude
+      }, this.saveAltitude)
     },
     displayLocationElevation (location, elevator, infowindow) {
-      elevator.getElevationForLocations({
-          'locations': [location]
-        }, function(results, status) {
-          infowindow.setPosition(location);
-          if (status === 'OK') {
-            // Retrieve the first result
-            if (results[0]) {
-              // Open the infowindow indicating the elevation at the clicked position.
-              infowindow.setContent('The elevation at this point <br>is ' +
-                  results[0].elevation + ' meters.');
-            } else {
-              infowindow.setContent('No results found');
-            }
-          } else {
-            infowindow.setContent('Elevation service failed due to: ' + status);
-          }
-        });
-    },
-    test () {
-      let that = this;
-      var uluru = {lat: -25.363, lng: 131.044}
-      var map = new window.google.maps.Map(document.getElementById('map'), {
-        zoom: 4,
-        center: this.latitude[1]
-      });
-      let elevator = new google.maps.ElevationService;
-      var infowindow = new google.maps.InfoWindow({map: map});
-
-      // Add a listener for the click event. Display the elevation for the LatLng of
-      // the click inside the infowindow.
-      map.addListener('click', function(event) {
-        that.displayLocationElevation(event.latLng, elevator, infowindow);
-      });
     }
   },
   mounted () {
@@ -98,8 +107,4 @@ a {
   color: #42b983;
 }
 
-#map {
-  height: 400px;
-  width: 100%;
-}
 </style>
