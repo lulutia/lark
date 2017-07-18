@@ -1,7 +1,6 @@
 <template>
   <div class="hello">
-    <div id="gmap"></div>
-   <!--  <button @click="test">click</button> -->
+    <div id="map"></div>
     <h2 v-if="error">{failStatus}</h2>
     <ul v-else v-for="item in showLatitude">
       <li>
@@ -25,61 +24,56 @@ export default {
     }
   },
   methods: {
-    // initPosition () {
-    //   for (let i = -180; i <= 180; i++) {
-    //     this.latitude.push(new window.google.maps.LatLng(30.000, 22))
-    //   }
-    // },
-    // saveAltitude (elevations, status) {
-    //   console.log(status)
-    //   if (status !== 'OK') {
-    //     this.error = true
-    //     this.failStatus = 'Cannot show elevation: request failed because ' + status
-    //     return
-    //   }
-    //   this.showLatitude = elevations.slice()
-    // },
-    // getAltitude () {
-    //   this.elevator = new window.google.maps.ElevationService()
-    //   let infowindow = new window.google.maps.InfoWindow({map: this.map})
-    //   this.map.addListener('click', function (event) {
-    //     this.displayLocationElevation(event.latLng, this.elevator, infowindow)
-    //   })
-    // },
-    // displayLocationElevation (location, elevator, infowindow) {
-    //   this.elevator.getElevationForLocations({
-    //     'locations': [location]
-    //   }, function (results, status) {
-    //     infowindow.setPosition(location)
-    //     if (status === 'OK') {
-    //       // Retrieve the first result
-    //       if (results[0]) {
-    //         // Open the infowindow indicating the elevation at the clicked position.
-    //         infowindow.setContent('The elevation at this point <br>is ' +
-    //             results[0].elevation + ' meters.')
-    //       } else {
-    //         infowindow.setContent('No results found')
-    //       }
-    //     } else {
-    //       infowindow.setContent('Elevation service failed due to: ' + status)
-    //     }
-    //   })
-    // },
-    createMap () {
-      console.log(window.google.maps)
-      // console.log(JSON.stringify(window.google.maps.Map));
-      new window.google.maps.Map(document.getElementById('gmap'), {
-        center: {
-          zoom: 8,
-          mapTypeId: 'terrain'
-        }
-      })
+    initPosition () {
+      for (let i = -180; i < 180; i++) {
+        this.latitude.push({lat: 30.000, lng: parseFloat(i)});
+      }
+      this.test();
+    },
+    saveAltitude (elevations, status) {
+
+    },
+    getAltitude () {
+
+    },
+    displayLocationElevation (location, elevator, infowindow) {
+      elevator.getElevationForLocations({
+          'locations': [location]
+        }, function(results, status) {
+          infowindow.setPosition(location);
+          if (status === 'OK') {
+            // Retrieve the first result
+            if (results[0]) {
+              // Open the infowindow indicating the elevation at the clicked position.
+              infowindow.setContent('The elevation at this point <br>is ' +
+                  results[0].elevation + ' meters.');
+            } else {
+              infowindow.setContent('No results found');
+            }
+          } else {
+            infowindow.setContent('Elevation service failed due to: ' + status);
+          }
+        });
+    },
+    test () {
+      let that = this;
+      var uluru = {lat: -25.363, lng: 131.044}
+      var map = new window.google.maps.Map(document.getElementById('map'), {
+        zoom: 4,
+        center: this.latitude[1]
+      });
+      let elevator = new google.maps.ElevationService;
+      var infowindow = new google.maps.InfoWindow({map: map});
+
+      // Add a listener for the click event. Display the elevation for the LatLng of
+      // the click inside the infowindow.
+      map.addListener('click', function(event) {
+        that.displayLocationElevation(event.latLng, elevator, infowindow);
+      });
     }
   },
-  created () {
-    // this.initPosition()
-    this.createMap()
-    // this.getAltitude()
+  mounted () {
+    this.initPosition()
   }
 }
 </script>
@@ -102,5 +96,10 @@ li {
 
 a {
   color: #42b983;
+}
+
+#map {
+  height: 400px;
+  width: 100%;
 }
 </style>
